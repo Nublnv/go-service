@@ -68,3 +68,21 @@ func Unauthorized(code int, message string, err error) *HTTPError {
 		e:       err,
 	}
 }
+
+func Forbidden(code int, message string, err error) *HTTPError {
+	return &HTTPError{
+		Status:  http.StatusForbidden,
+		Code:    code,
+		Message: message,
+		e:       err,
+	}
+}
+
+func MethodNotAllowed(code int, message string, err error) *HTTPError {
+	return &HTTPError{
+		Status:  http.StatusMethodNotAllowed,
+		Code:    code,
+		Message: message,
+		e:       err,
+	}
+}
