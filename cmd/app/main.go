@@ -8,6 +8,8 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	router "github.com/Nublnv/go-service/cmd/internal/router"
 )
 
 func main() {
@@ -28,7 +30,8 @@ func main() {
 	}
 
 	svc := &http.Server{
-		Addr: fmt.Sprintf("%s:%s", host, port),
+		Addr:    fmt.Sprintf("%s:%s", host, port),
+		Handler: router.GetRouter(),
 	}
 
 	if tlsCert != "" && tlsKey != "" {
