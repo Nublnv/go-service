@@ -7,7 +7,7 @@ import (
 
 	"github.com/Nublnv/go-service/cmd/internal/errorHandler"
 	"github.com/Nublnv/go-service/cmd/internal/errors"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -27,45 +27,48 @@ func GetPublicHandler() http.Handler {
 }
 
 type RegisterRequest struct {
-	Username string `json:"username"`
+	Username string `json:"login"`
 	Password string `json:"password"`
 }
 
 func register(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodPost {
-		return errors.MethodNotAllowed(1000, "Method not allowed", nil)
+		return errors.MethodNotAllowed(1000, "Method not allowed", nil, r)
 	}
 
 	if err := r.ParseForm(); err != nil {
-		return errors.BadRequest(1002, "Invalid form data", err)
+		return errors.BadRequest(1002, "Invalid form data", err, r)
 	}
 
 	registerReq := &RegisterRequest{
-		Username: r.FormValue("username"),
+		Username: r.FormValue("login"),
 		Password: r.FormValue("password"),
 	}
 
-	var db pgxpool.Tx = r.Context().Value("db").(pgxpool.Tx)
+	var db pgx.Tx = r.Context().Value("db").(pgx.Tx)
 
 	var existedLogin string = ""
 
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
-	res := db.QueryRow(ctx, "SELECT login FROM auth.users WHERE login = %s", registerReq.Username)
-	res.Scan(&existedLogin)
+	res := db.QueryRow(ctx, "SELECT login FROM auth.users WHERE login = $1", registerReq.Username)
+	err := res.Scan(&existedLogin)
+	if err != nil && err != pgx.ErrNoRows {
+		return errors.BadRequest(500, "Something went wrong", err, r)
+	}
 	if existedLogin != "" {
-		return errors.BadRequest(400, "User with provided login already exists", nil)
+		return errors.BadRequest(400, "User with provided login already exists", nil, r)
 	}
 
 	passHash, err := bcrypt.GenerateFromPassword([]byte(registerReq.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return errors.InternalServerError(500, "Cannot hash password", err)
+		return errors.InternalServerError(500, "Cannot hash password", err, r)
 	}
 
-	insert, err := db.Exec(ctx, "INSERT INTO auth.users (login, passhash) VALUES ( %s, %d )", registerReq.Username, passHash)
+	insert, err := db.Exec(ctx, "INSERT INTO auth.users (login, passhash) VALUES ( $1, $2 )", registerReq.Username, passHash)
 	if err != nil || insert.RowsAffected() == 0 {
-		return errors.InternalServerError(500, "Cannot add new user", err)
+		return errors.InternalServerError(500, "Cannot add new user", err, r)
 	}
 
 	return nil
