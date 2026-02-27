@@ -1,10 +1,14 @@
 package public
 
 import (
+	"context"
 	"net/http"
+	"time"
 
 	"github.com/Nublnv/go-service/cmd/internal/errorHandler"
 	"github.com/Nublnv/go-service/cmd/internal/errors"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var handler http.ServeMux
@@ -41,17 +45,28 @@ func register(w http.ResponseWriter, r *http.Request) error {
 		Password: r.FormValue("password"),
 	}
 
-	var db = r.Context().Value("db")
+	var db pgxpool.Tx = r.Context().Value("db").(pgxpool.Tx)
 
-	if db == nil {
-		return errors.InternalServerError(1003, "Database connection not found", nil)
-	} else {
-		// TODO - implement registration logic here
+	var existedLogin string = ""
+
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	res := db.QueryRow(ctx, "SELECT login FROM auth.users WHERE login = %s", registerReq.Username)
+	res.Scan(&existedLogin)
+	if existedLogin != "" {
+		return errors.BadRequest(400, "User with provided login already exists", nil)
 	}
 
-	w.Header().Set("Authorization", "Bearer <token>") // TODO - generate real token here
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Registration successful"))
+	passHash, err := bcrypt.GenerateFromPassword([]byte(registerReq.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return errors.InternalServerError(500, "Cannot hash password", err)
+	}
+
+	insert, err := db.Exec(ctx, "INSERT INTO auth.users (login, passhash) VALUES ( %s, %d )", registerReq.Username, passHash)
+	if err != nil || insert.RowsAffected() == 0 {
+		return errors.InternalServerError(500, "Cannot add new user", err)
+	}
 
 	return nil
 }
