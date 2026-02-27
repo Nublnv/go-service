@@ -14,13 +14,13 @@ func DbMiddleware(pool *pgxpool.Pool) func(http.Handler) http.Handler {
 		return http.HandlerFunc(errorHandler.Wrap(func(w http.ResponseWriter, r *http.Request) error {
 			conn, err := pool.Acquire(r.Context())
 			if err != nil {
-				return errors.InternalServerError(500, "DB unavailible", nil)
+				return errors.InternalServerError(500, "DB unavailible", err)
 			}
 			defer conn.Release()
 
 			tx, err := conn.Begin(r.Context())
 			if err != nil {
-				return errors.InternalServerError(500, "Tx begin failed", nil)
+				return errors.InternalServerError(500, "Tx begin failed", err)
 			}
 			defer tx.Rollback(r.Context())
 
