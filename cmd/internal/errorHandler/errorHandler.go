@@ -25,7 +25,7 @@ func Wrap(h ApiErrorResponse) http.HandlerFunc {
 					},
 				})
 				r.Context().Err()
-				log.Printf("HTTP error: %v", httpErr.Error())
+				log.Print(httpErr.Error())
 				return
 			} else {
 				w.WriteHeader(http.StatusInternalServerError)
