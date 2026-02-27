@@ -43,9 +43,9 @@ func main() {
 	if dbUser == "" {
 		panic("POSTGRES_USER env variable is not set")
 	}
-	dbPass := os.Getenv("POSTGRES_PASS")
+	dbPass := os.Getenv("POSTGRES_PASSWORD")
 	if dbPass == "" {
-		panic("POSTGRES_PASS env variable is not set")
+		panic("POSTGRES_PASSWORD env variable is not set")
 	}
 	dbName := os.Getenv("POSTGRES_DB")
 	if dbName == "" {
