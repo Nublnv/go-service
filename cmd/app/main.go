@@ -3,14 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/Nublnv/go-service/cmd/internal/middleware"
-	router "github.com/Nublnv/go-service/cmd/internal/router"
+	"github.com/Nublnv/go-service/cmd/internal/http"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -59,24 +57,8 @@ func main() {
 		panic("Failed to connect postgres db with provided credentials")
 	}
 
-	svc := &http.Server{
-		Addr:    fmt.Sprintf("%s:%s", host, port),
-		Handler: middleware.DbMiddleware(pool)(router.GetRouter()),
-	}
-
-	if tlsCert != "" && tlsKey != "" {
-		go func() {
-			if err := svc.ListenAndServeTLS(tlsCert, tlsKey); err != nil && err != http.ErrServerClosed {
-				panic(fmt.Sprintf("Failed to start server: %v", err))
-			}
-		}()
-	} else {
-		go func() {
-			if err := svc.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				panic(fmt.Sprintf("Failed to start server: %v", err))
-			}
-		}()
-	}
+	svc := http.GetHttpServer(host, port, pool)
+	go http.ServeServer(svc, tlsCert, tlsKey)()
 
 	fmt.Printf("Server is running on %s:%s\n", host, port)
 
