@@ -3,6 +3,7 @@ package router
 import (
 	"net/http"
 
+	api "github.com/Nublnv/go-service/cmd/internal/api"
 	middleware "github.com/Nublnv/go-service/cmd/internal/middleware"
 	public "github.com/Nublnv/go-service/cmd/internal/public"
 )
@@ -13,7 +14,7 @@ func init() {
 	router = http.NewServeMux()
 
 	public := public.GetPublicHandler()
-	api := http.NewServeMux()
+	api := api.GetApiHandler()
 
 	router.Handle("/", public)
 	router.Handle("/api/", middleware.AuthMiddleware(http.StripPrefix("/api", api)))
