@@ -23,7 +23,6 @@ type claims struct {
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(errorHandler.Wrap(func(w http.ResponseWriter, r *http.Request) error {
 
-		claim := &claims{}
 		authHeader := r.Header.Get("Authorization")
 		if authHeader != "" {
 			prefix := "Bearer "
@@ -31,18 +30,9 @@ func AuthMiddleware(next http.Handler) http.Handler {
 				return errors.BadRequest(400, "Wrong auth method", nil, r)
 			}
 			tokenString := strings.TrimPrefix(authHeader, prefix)
-			token, err := jwt.ParseWithClaims(tokenString, claim, func(t *jwt.Token) (any, error) {
-				if t.Method != jwt.SigningMethodHS256 {
-					return nil, jwt.ErrInvalidKeyType
-				}
-				return []byte(secretKey), nil
-			})
+			err := checkToken(tokenString, r)
 			if err != nil {
-				return errors.InternalServerError(500, "Token parse error", err, r)
-			}
-			if !token.Valid {
-				w.Header().Del("Authorization")
-				return errors.Unauthorized(401, "Token not valid", nil, r)
+				return err
 			}
 			next.ServeHTTP(w, r)
 			return nil
@@ -52,7 +42,24 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	}))
 }
 
-func GetToket(login string) (string, error) {
+func checkToken(tokenString string, r *http.Request) *errors.HTTPError {
+	claim := &claims{}
+	token, err := jwt.ParseWithClaims(tokenString, claim, func(t *jwt.Token) (any, error) {
+		if t.Method != jwt.SigningMethodHS256 {
+			return nil, jwt.ErrInvalidKeyType
+		}
+		return []byte(secretKey), nil
+	})
+	if err != nil {
+		return errors.InternalServerError(500, "Token parse error", err, r)
+	}
+	if !token.Valid {
+		return errors.Unauthorized(401, "Token not valid", nil, r)
+	}
+	return nil
+}
+
+func GetToken(login string) (string, error) {
 
 	claims := claims{
 		login: login,

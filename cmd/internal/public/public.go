@@ -115,7 +115,7 @@ func login(w http.ResponseWriter, r *http.Request) error {
 		return errors.Forbidden(403, "Wrong password", err, r)
 	}
 
-	token, err := middleware.GetToket(userData.login)
+	token, err := middleware.GetToken(userData.login)
 	if err != nil {
 		return errors.InternalServerError(500, "Internal server error", err, r)
 	}
