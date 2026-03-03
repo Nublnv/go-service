@@ -1,0 +1,25 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+
+# Логи
+*.log
+
+# Билд-артефакты
+bin/
+dist/
+tmp/
+docker-compose.yaml
+
+# OS
+.DS_Store
+
+# Тестовые данные
+coverage.out
+
+# Env
+.env

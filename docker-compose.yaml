@@ -21,6 +21,23 @@ services:
     volumes:
       - postgres:/data/pg_data
 
+  go-service:
+    build:
+      dockerfile: Dockerfile
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: postgres
+      REST_HOST: 0.0.0.0
+      REST_PORT: 443
+    image: go-service-linux-arm64
+    ports:
+      - 8443:443
+    networks:
+      - postgres
+
+
 volumes:
   postgres:
     driver: local
