@@ -12,14 +12,14 @@
   - `py-service/`  
   - `proto/`
 
-- [ ] **1.2** Добавить базовый `README` с описанием архитектуры
+- [x] **1.2** Добавить базовый `README` с описанием архитектуры
 
-- [ ] **1.3** Описать роли БД:
+- [x] **1.3** Описать роли БД:
   - Postgres (OLTP)
   - Mongo (raw events / документы)
   - ClickHouse (аналитика)
 
-- [ ] **1.4** Настроить gitignore
+- [x] **1.4** Настроить gitignore
 
 - [ ] **1.5** Добавить Makefile
 
@@ -27,21 +27,21 @@
 
 # 2. Docker Infrastructure
 
-- [ ] **2.1** Создать `docker-compose.yml`
+- [x] **2.1** Создать `docker-compose.yml`
 
-- [ ] **2.2** Добавить сервис `postgres`
+- [x] **2.2** Добавить сервис `postgres`
 
 - [ ] **2.3** Добавить сервис `clickhouse`
 
 - [ ] **2.4** Добавить сервис `mongo`
 
-- [ ] **2.5** Добавить сервис `go-service`
+- [x] **2.5** Добавить сервис `go-service`
 
 - [ ] **2.6** Добавить сервис `py-service`
 
-- [ ] **2.7** Добавить docker volumes
+- [x] **2.7** Добавить docker volumes
 
-- [ ] **2.8** Добавить docker networks
+- [x] **2.8** Добавить docker networks
 
 - [ ] **2.9** Добавить healthchecks
 
@@ -67,19 +67,19 @@
 
 # 4. Go Service Skeleton
 
-- [ ] **4.1** Создать структуру Go проекта
+- [x] **4.1** Создать структуру Go проекта
 
-- [ ] **4.2** Добавить конфигурацию приложения
+- [x] **4.2** Добавить конфигурацию приложения
 
-- [ ] **4.3** Добавить structured logging
+- [x] **4.3** Добавить structured logging
 
-- [ ] **4.4** Реализовать graceful shutdown
+- [x] **4.4** Реализовать graceful shutdown
 
-- [ ] **4.5** Реализовать dependency wiring
+- [x] **4.5** Реализовать dependency wiring
 
-- [ ] **4.6** Middleware: request-id
+- [x] **4.6** Middleware: request-id
 
-- [ ] **4.7** Middleware: panic recovery
+- [x] **4.7** Middleware: panic recovery
 
 - [ ] **4.8** Middleware: logging
 
@@ -187,6 +187,8 @@
 
 - [ ] **9.1.4** Use-case: ListOrders
 
+- [x] **9.1.5** Registration and logining
+
 ---
 
 ## 9.2 Outbox Worker
@@ -251,68 +253,52 @@
 
 ---
 
-# 13. Observability
+# 13. Testing
 
-- [ ] **13.1** Prometheus metrics
+- [ ] **13.1** Unit tests (Go)
 
-- [ ] **13.2** HTTP metrics
+- [ ] **13.2** Integration tests
 
-- [ ] **13.3** gRPC metrics
+- [ ] **13.3** gRPC contract tests
 
-- [ ] **13.4** Outbox worker metrics
-
-- [ ] **13.5** OpenTelemetry tracing
+- [ ] **13.4** Load testing
 
 ---
 
-# 14. Testing
+# 14. CI/CD
 
-- [ ] **14.1** Unit tests (Go)
+- [ ] **14.1** Настроить CI pipeline
 
-- [ ] **14.2** Integration tests
+- [ ] **14.2** Запуск тестов
 
-- [ ] **14.3** gRPC contract tests
+- [ ] **14.3** Запуск линтеров
 
-- [ ] **14.4** Load testing
-
----
-
-# 15. CI/CD
-
-- [ ] **15.1** Настроить CI pipeline
-
-- [ ] **15.2** Запуск тестов
-
-- [ ] **15.3** Запуск линтеров
-
-- [ ] **15.4** Build docker images
+- [ ] **14.4** Build docker images
 
 ---
 
-# 16. Documentation
+# 15. Documentation
 
-- [ ] **16.1** README: запуск проекта
+- [ ] **15.1** README: запуск проекта
 
-- [ ] **16.2** README: архитектура
+- [ ] **15.2** README: архитектура
 
-- [ ] **16.3** Диаграмма потоков данных
+- [ ] **15.4** Примеры HTTP запросов
 
-- [ ] **16.4** Примеры HTTP запросов
-
-- [ ] **16.5** Примеры gRPC запросов
+- [ ] **15.5** Примеры gRPC запросов
 
 ---
 
-# 17. Optional Improvements
+# 16. Optional Improvements
 
-- [ ] **17.1** Swagger/OpenAPI
+- [ ] **16.1** Swagger/OpenAPI
 
-- [ ] **17.2** gRPC reflection
+- [ ] **16.2** gRPC reflection
 
-- [ ] **17.3** Dead-letter queue
+- [ ] **16.3** Dead-letter queue
 
-- [ ] **17.4** Materialized views в ClickHouse
+- [ ] **16.4** Materialized views в ClickHouse
 
-- [ ] **17.5** Версионирование событий
+- [ ] **16.5** Версионирование событий
 
 ---

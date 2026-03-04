@@ -1,4 +1,3 @@
-...existing code...
 # Go / Python Services — Monorepo
 
 Короткое описание: сервисная платформа на Go (REST + PostgreSQL) с будущим Python gRPC-компонентом. Подробный план развития — в [PROJECT.md](PROJECT.md).
@@ -29,7 +28,7 @@
 
 ## Что планируется (кратко, из PROJECT.md)
 Ссылка на полный план: [PROJECT.md](PROJECT.md). Ключевые направления:
-- Docker / infra: добавить ClickHouse, Mongo, доработать docker-compose.
+- Docker: добавить ClickHouse, Mongo, доработать docker-compose.
 - Protobuf и генерация для Go/Python.
 - Полный каркас Go-сервиса: миграции Postgres, репозитории, outbox, бизнес-логика orders.
 - Python gRPC для хранения raw events в Mongo.
@@ -38,24 +37,5 @@
 ## Быстрый старт (локально)
 1. Подготовить .env (см. [docker-compose.yaml](docker-compose.yaml)).
 2. Запустить Postgres через docker-compose:  
-   docker-compose up -d postgres
-3. Сконфигурировать TLS файлы в certs/, задать переменные окружения и запустить сервис (локально или через Dockerfile).
-
----
-
-Полезные ссылки на исходники:
-- [PROJECT.md](PROJECT.md)  
-- [docker-compose.yaml](docker-compose.yaml)  
-- [Dockerfile](Dockerfile)  
-- [go-service/go.mod](go-service/go.mod)  
-- [go-service/cmd/app/main.go](go-service/cmd/app/main.go)  
-- [go-service/cmd/internal/http/server.go](go-service/cmd/internal/http/server.go) — [`http.GetHttpServer`](go-service/cmd/internal/http/server.go), [`http.ServeServer`](go-service/cmd/internal/http/server.go)  
-- [go-service/cmd/internal/router/router.go](go-service/cmd/internal/router/router.go) — [`router.GetRouter`](go-service/cmd/internal/router/router.go)  
-- [go-service/cmd/internal/middleware/db.go](go-service/cmd/internal/middleware/db.go) — [`middleware.DbMiddleware`](go-service/cmd/internal/middleware/db.go)  
-- [go-service/cmd/internal/middleware/auth.go](go-service/cmd/internal/middleware/auth.go) — [`middleware.AuthMiddleware`](go-service/cmd/internal/middleware/auth.go), [`middleware.GetToken`](go-service/cmd/internal/middleware/auth.go)  
-- [go-service/cmd/internal/public/public.go](go-service/cmd/internal/public/public.go) — [`public.GetPublicHandler`](go-service/cmd/internal/public/public.go)  
-- [go-service/cmd/internal/api/api.go](go-service/cmd/internal/api/api.go) — [`api.GetApiHandler`](go-service/cmd/internal/api/api.go)  
-- [go-service/cmd/internal/errorHandler/errorHandler.go](go-service/cmd/internal/errorHandler/errorHandler.go) — [`errorHandler.Wrap`](go-service/cmd/internal/errorHandler/errorHandler.go)  
-- [go-service/cmd/internal/errors/erros.go](go-service/cmd/internal/errors/erros.go) — [`errors.HTTPError`](go-service/cmd/internal/errors/erros.go)
-
-...existing code...
+   docker-compose up -d --build
+3. Сконфигурировать TLS файлы, задать переменную окружения TLS_PATH и запустить сервис (локально или через Dockerfile).
