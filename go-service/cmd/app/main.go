@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Nublnv/go-service/cmd/internal/http"
+	"github.com/Nublnv/go-service/cmd/internal/migrations"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -69,6 +70,12 @@ func main() {
 	if err != nil {
 		panic("Failed to connect postgres db with provided credentials")
 	}
+	conn, err := pool.Acquire(baseContext)
+	if err != nil {
+		panic(err)
+	}
+	migrations.DoPgMigrates(baseContext, *conn)
+	conn.Conn().Close(baseContext)
 
 	svc := http.GetHttpServer(host, port, pool)
 	go http.ServeServer(svc, fmt.Sprintf("%s/server.crt", tlsPath), fmt.Sprintf("%s/server.key", tlsPath))()
