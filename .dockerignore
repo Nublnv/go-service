@@ -13,7 +13,6 @@
 bin/
 dist/
 tmp/
-docker-compose.yaml
 
 # OS
 .DS_Store

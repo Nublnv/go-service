@@ -1,6 +1,7 @@
-FROM golang:1.26.0 
+# go-service
+FROM golang:1.26.0 AS go-service
 WORKDIR /src
-COPY go.mod go.sum ./
+COPY go-service/go.mod go-service/go.sum ./
 RUN go mod download
 
 COPY go-service/ .
@@ -18,3 +19,5 @@ ENV TLS_KEY=/src/certs/server.key
 
 USER nonroot:nonroot
 ENTRYPOINT [ "/app" ]
+
+# py-service
