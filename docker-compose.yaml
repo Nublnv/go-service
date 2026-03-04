@@ -31,6 +31,7 @@ services:
       POSTGRES_HOST: postgres
       REST_HOST: 0.0.0.0
       REST_PORT: 443
+      TLS_PATH: /src/certs
     image: go-service-linux-arm64
     ports:
       - 8443:443
@@ -46,6 +47,13 @@ volumes:
       type: none
       o: bind
       device: ${POSTGRES_DATA}
+  tls:
+    driver: local
+    name: certs
+    driver_opts:
+      type: none
+      o: bind
+      device: ${TLS_PATH}
 
 networks:
   postgres:

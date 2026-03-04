@@ -23,10 +23,23 @@ func main() {
 		port = "443"
 	}
 
-	tlsCert := os.Getenv("TLS_CERT")
-	tlsKey := os.Getenv("TLS_KEY")
-	if tlsCert == "" && tlsKey == "" {
-		panic("TLS_CERT and TLS_KEY env variables must be set both or not set at all")
+	tlsPath := os.Getenv("TLS_PATH")
+	if tlsPath == "" {
+		panic("tlsPath env variables must be set with the path that include server.crt and server.key")
+	} else {
+		stat, err := os.Stat(tlsPath)
+		if err != nil {
+			panic(err)
+		}
+		if !stat.IsDir() {
+			panic("TLS_PATH must be a directory")
+		}
+		if _, err := os.Stat(fmt.Sprintf("%s/server.crt", tlsPath)); err != nil {
+			panic(err)
+		}
+		if _, err := os.Stat(fmt.Sprintf("%s/server.key", tlsPath)); err != nil {
+			panic(err)
+		}
 	}
 
 	dbHost := os.Getenv("POSTGRES_HOST")
@@ -58,7 +71,7 @@ func main() {
 	}
 
 	svc := http.GetHttpServer(host, port, pool)
-	go http.ServeServer(svc, tlsCert, tlsKey)()
+	go http.ServeServer(svc, fmt.Sprintf("%s/server.crt", tlsPath), fmt.Sprintf("%s/server.key", tlsPath))()
 
 	fmt.Printf("Server is running on %s:%s\n", host, port)
 
