@@ -20,12 +20,12 @@ func main() {
 	}
 	port := os.Getenv("REST_PORT")
 	if port == "" {
-		port = "8443"
+		port = "443"
 	}
 
 	tlsCert := os.Getenv("TLS_CERT")
 	tlsKey := os.Getenv("TLS_KEY")
-	if (tlsCert == "" && tlsKey != "") || (tlsCert != "" && tlsKey == "") {
+	if tlsCert == "" && tlsKey == "" {
 		panic("TLS_CERT and TLS_KEY env variables must be set both or not set at all")
 	}
 
