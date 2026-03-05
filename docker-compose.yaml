@@ -60,6 +60,7 @@ services:
       CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
       CLICKHOUSE_DB: ${CLICKHOUSE_DB}
       MIGRATIONS_PATH: /src/migrations
+    # entrypoint: ["/bin/bash", "-c", "sleep infinity"]
     image: go-service-linux-arm64
     hostname: go-service
     ports:
