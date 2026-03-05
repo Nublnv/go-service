@@ -56,10 +56,10 @@ services:
       TLS_PATH: /src/certs
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
       CLICKHOUSE_HOST: clickhouse
-      CLICKHOUSE_PORT: 9000
       CLICKHOUSE_USER: ${CLICKHOUSE_USER}
       CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
       CLICKHOUSE_DB: ${CLICKHOUSE_DB}
+      MIGRATIONS_PATH: /src/migrations
     image: go-service-linux-arm64
     hostname: go-service
     ports:
