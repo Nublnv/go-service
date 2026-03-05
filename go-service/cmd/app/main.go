@@ -8,9 +8,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Nublnv/go-service/cmd/internal/db"
 	"github.com/Nublnv/go-service/cmd/internal/http"
 	"github.com/Nublnv/go-service/cmd/internal/migrations"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func main() {
@@ -43,42 +43,21 @@ func main() {
 		}
 	}
 
-	dbHost := os.Getenv("POSTGRES_HOST")
-	if dbHost == "" {
-		panic("POSTGRES_HOST env variable is not set")
-	}
-	dbPort := os.Getenv("POSTGRES_PORT")
-	if dbPort == "" {
-		dbPort = "5432"
-	}
-	dbUser := os.Getenv("POSTGRES_USER")
-	if dbUser == "" {
-		panic("POSTGRES_USER env variable is not set")
-	}
-	dbPass := os.Getenv("POSTGRES_PASSWORD")
-	if dbPass == "" {
-		panic("POSTGRES_PASSWORD env variable is not set")
-	}
-	dbName := os.Getenv("POSTGRES_DB")
-	if dbName == "" {
-		panic("POSTGRES_DB env variable is not set")
-	}
-
 	baseContext := context.Background()
 
-	pool, err := pgxpool.New(baseContext, fmt.Sprintf("postgres://%s:%s@%s:%s/%s", dbUser, dbPass, dbHost, dbPort, dbName))
-	if err != nil {
-		panic("Failed to connect postgres db with provided credentials")
-	}
-	conn, err := pool.Acquire(baseContext)
+	pool, err := db.GetPgxPool(baseContext)
 	if err != nil {
 		panic(err)
 	}
-	err = migrations.DoPgMigrates(baseContext, *conn)
-	conn.Conn().Close(baseContext)
+
+	chPool := db.GetClickConnPull(baseContext)
+
+	err = migrations.DoPgMigrates(baseContext, pool)
 	if err != nil {
 		panic(err)
 	}
+
+	err = migrations.DoChickMigrations(baseContext, chPool, pool)
 
 	svc := http.GetHttpServer(host, port, pool)
 	go http.ServeServer(svc, fmt.Sprintf("%s/server.crt", tlsPath), fmt.Sprintf("%s/server.key", tlsPath))()
