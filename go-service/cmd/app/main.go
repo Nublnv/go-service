@@ -58,6 +58,9 @@ func main() {
 	}
 
 	err = migrations.DoChickMigrations(baseContext, chPool, pool)
+	if err != nil {
+		panic(err)
+	}
 
 	svc := http.GetHttpServer(host, port, pool, chPool)
 	go http.ServeServer(svc, fmt.Sprintf("%s/server.crt", tlsPath), fmt.Sprintf("%s/server.key", tlsPath))()
