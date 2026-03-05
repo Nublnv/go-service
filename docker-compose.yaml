@@ -23,7 +23,7 @@ services:
       - postgres:/data/pg_data
 
   clickhouse-server:
-    image: clickhouse/clickhouse-server:latest # Use a specific version for stability (e.g., 23.10)
+    image: clickhouse/clickhouse-server:26.2.4 # Use a specific version for stability (e.g., 23.10)
     hostname: clickhouse
     ports:
       - "8123:8123" # HTTP interface port
