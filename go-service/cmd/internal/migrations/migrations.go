@@ -50,7 +50,7 @@ func DoPgMigrates(ctx context.Context, pool *pgxpool.Pool) error {
 		if err != nil {
 			return err
 		}
-		value, ok := migrationsMapping[date]
+		value, ok := migrationsMapping[*date]
 		if ok && value == name {
 			continue
 		}
@@ -112,7 +112,7 @@ func DoChickMigrations(ctx context.Context, pool *db.Pool, pgPool *pgxpool.Pool)
 		if err != nil {
 			return err
 		}
-		value, ok := migrationsMapping[date]
+		value, ok := migrationsMapping[*date]
 		if ok && value == name {
 			continue
 		}
@@ -165,7 +165,9 @@ func parseFileName(filename string) (*time.Time, string, error) {
 			}
 			return &date, name, nil
 		} else {
-			return nil, name, nil
+			date := new(time.Time)
+			*date = time.Unix(0, 0)
+			return date, name, nil
 		}
 	} else {
 		return nil, "", fmt.Errorf("Wrong file %s name format", filename)
@@ -173,10 +175,10 @@ func parseFileName(filename string) (*time.Time, string, error) {
 
 }
 
-func getMigrations(ctx context.Context, conn *pgxpool.Conn, table string) (map[*time.Time]string, error) {
-	var migrationsMap = map[*time.Time]string{}
+func getMigrations(ctx context.Context, conn *pgxpool.Conn, table string) (map[time.Time]string, error) {
+	var migrationsMap = map[time.Time]string{}
 
-	rows, err := conn.Query(ctx, "SELECT migration_date, name FROM migrations.$1", table)
+	rows, err := conn.Query(ctx, fmt.Sprintf("SELECT migration_date, name FROM migrations.%s", table))
 	if err != pgx.ErrNoRows && err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
@@ -190,10 +192,10 @@ func getMigrations(ctx context.Context, conn *pgxpool.Conn, table string) (map[*
 	for rows.Next() {
 		var name string
 		var date time.Time
-		if err := rows.Scan(&date, name); err != nil {
+		if err := rows.Scan(&date, &name); err != nil {
 			return nil, err
 		}
-		migrationsMap[&date] = name
+		migrationsMap[date] = name
 	}
 	return migrationsMap, nil
 }
