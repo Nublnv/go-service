@@ -8,10 +8,11 @@ services:
       POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
       POSTGRES_DB: ${POSTGRES_DB}
       PGDATA: /data/pg_data
+    hostname: postgres
     ports:
       - "${POSTGRES_PORT}:5432"
     networks:
-      - postgres
+      - go-service
     restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -d postgres" ]
@@ -20,6 +21,27 @@ services:
       retries: 5
     volumes:
       - postgres:/data/pg_data
+
+  clickhouse-server:
+    image: clickhouse/clickhouse-server:latest # Use a specific version for stability (e.g., 23.10)
+    hostname: clickhouse
+    ports:
+      - "8123:8123" # HTTP interface port
+      - "9000:9000" # Native client port
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - clickhouse_logs:/var/log/clickhouse-server
+    environment:
+      # Optional: Set default user password and database
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB}
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    networks:
+      - go-service
 
   go-service:
     build:
@@ -32,12 +54,20 @@ services:
       REST_HOST: 0.0.0.0
       REST_PORT: 443
       TLS_PATH: /src/certs
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 9000
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB}
     image: go-service-linux-arm64
+    hostname: go-service
     ports:
       - 8443:443
     networks:
-      - postgres
-
+      - go-service
+    volumes:
+      - tls:/src/certs
 
 volumes:
   postgres:
@@ -54,7 +84,21 @@ volumes:
       type: none
       o: bind
       device: ${TLS_PATH}
+  clickhouse_data:
+    driver: local
+    name: clickhouse_data
+    driver_opts:
+      type: none
+      o: bind
+      device: ${CLICKHOUSE_DATA}
+  clickhouse_logs:
+    driver: local
+    name: clickhouse_logs
+    driver_opts:
+      type: none
+      o: bind
+      device: ${CLICKHOUSE_LOGS}
 
 networks:
-  postgres:
+  go-service:
     driver: bridge
