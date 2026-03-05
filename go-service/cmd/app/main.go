@@ -59,7 +59,7 @@ func main() {
 
 	err = migrations.DoChickMigrations(baseContext, chPool, pool)
 
-	svc := http.GetHttpServer(host, port, pool)
+	svc := http.GetHttpServer(host, port, pool, chPool)
 	go http.ServeServer(svc, fmt.Sprintf("%s/server.crt", tlsPath), fmt.Sprintf("%s/server.key", tlsPath))()
 
 	fmt.Printf("Server is running on %s:%s\n", host, port)
