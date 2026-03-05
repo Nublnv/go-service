@@ -64,7 +64,7 @@ func GetClickConnPull(ctx context.Context) *Pool {
 		panic("CLICKHOUSE_DB env variable is not set")
 	}
 	return new_(clickhouse.Options{
-		Addr: []string{fmt.Sprint(dbHost, "", dbPort)},
+		Addr: []string{fmt.Sprint(dbHost, ":", dbPort)},
 		Auth: clickhouse.Auth{
 			Username: dbUser,
 			Database: dbName,
