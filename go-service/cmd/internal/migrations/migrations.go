@@ -37,6 +37,8 @@ func DoPgMigrates(ctx context.Context, pool *pgxpool.Pool) error {
 		return err
 	}
 
+	doneMigrations := 0
+
 	for _, file := range files {
 		if file.IsDir() {
 			continue
@@ -50,7 +52,8 @@ func DoPgMigrates(ctx context.Context, pool *pgxpool.Pool) error {
 		if err != nil {
 			return err
 		}
-		value, ok := migrationsMapping[*date]
+		date.Unix()
+		value, ok := migrationsMapping[date.Unix()]
 		if ok && value == name {
 			continue
 		}
@@ -64,14 +67,23 @@ func DoPgMigrates(ctx context.Context, pool *pgxpool.Pool) error {
 			tx.Rollback(ctx)
 			return err
 		}
-		tx.Commit(ctx)
-		err = addMigrationRecord(ctx, conn, &Migration{
+		err = addMigrationRecord(ctx, tx, &Migration{
 			date: date,
 			name: name,
 		}, "postgres")
 		if err != nil {
+			tx.Rollback(ctx)
 			return err
 		}
+		err = tx.Commit(ctx)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Postgres migration %s %s done successfully\n", date.String(), name)
+		doneMigrations++
+	}
+	if doneMigrations == 0 {
+		fmt.Println("Noting to migrate in postgres. Skip...")
 	}
 	return nil
 }
@@ -81,7 +93,7 @@ func DoChickMigrations(ctx context.Context, pool *db.Pool, pgPool *pgxpool.Pool)
 	if err != nil {
 		return err
 	}
-	defer pgConn.Conn().Close(ctx)
+	defer pgConn.Release()
 
 	conn, err := pool.Acquire(ctx)
 	if err != nil {
@@ -99,6 +111,8 @@ func DoChickMigrations(ctx context.Context, pool *db.Pool, pgPool *pgxpool.Pool)
 		return err
 	}
 
+	doneMigrations := 0
+
 	for _, file := range files {
 		if file.IsDir() {
 			continue
@@ -112,7 +126,7 @@ func DoChickMigrations(ctx context.Context, pool *db.Pool, pgPool *pgxpool.Pool)
 		if err != nil {
 			return err
 		}
-		value, ok := migrationsMapping[*date]
+		value, ok := migrationsMapping[date.Unix()]
 		if ok && value == name {
 			continue
 		}
@@ -121,34 +135,42 @@ func DoChickMigrations(ctx context.Context, pool *db.Pool, pgPool *pgxpool.Pool)
 		if err != nil {
 			return err
 		}
-		err = addMigrationRecord(ctx, pgConn, &Migration{
+		tx, err := pgConn.Begin(ctx)
+		if err != nil {
+			return err
+		}
+		err = addMigrationRecord(ctx, tx, &Migration{
 			date: date,
 			name: name,
 		}, "clickhouse")
 		if err != nil {
+			tx.Rollback(ctx)
 			return err
 		}
+		err = tx.Commit(ctx)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Clickhouse migration %s %s done successfully\n", date.String(), name)
+		doneMigrations++
+	}
+	if doneMigrations == 0 {
+		fmt.Println("Noting to migrate in clickhouse. Skip...")
 	}
 	return nil
 }
 
-func addMigrationRecord(ctx context.Context, conn *pgxpool.Conn, migration *Migration, table string) error {
-	query := "INSERT INTO migrations.$4 (migration_date, name, application_date) VALUES ($1, $2, $3)"
+func addMigrationRecord(ctx context.Context, tx pgx.Tx, migration *Migration, table string) error {
+	query := fmt.Sprintf("INSERT INTO migrations.%s (migration_date, name, application_date) VALUES ($1, $2, $3)", table)
 
-	tx, err := conn.Begin(ctx)
-	if err != nil {
-		return err
-	}
 	if migration.date == nil {
 		migration.date = new(time.Time)
 		*migration.date = time.Unix(0, 0)
 	}
-	_, err = tx.Exec(ctx, query, &migration.date, migration.name, time.Now(), table)
+	_, err := tx.Exec(ctx, query, &migration.date, migration.name, time.Now())
 	if err != nil {
-		tx.Rollback(ctx)
 		return err
 	}
-	tx.Commit(ctx)
 	return nil
 }
 
@@ -157,7 +179,7 @@ func parseFileName(filename string) (*time.Time, string, error) {
 
 	result := re.FindStringSubmatch(filename)
 	if len(result) == 3 {
-		name := strings.Replace(result[2], "_", " ", 0)
+		name := strings.Replace(result[2], "_", " ", -1)
 		if result[1] != "00000000000000" {
 			date, err := time.Parse("20060102150405", result[1])
 			if err != nil {
@@ -175,8 +197,8 @@ func parseFileName(filename string) (*time.Time, string, error) {
 
 }
 
-func getMigrations(ctx context.Context, conn *pgxpool.Conn, table string) (map[time.Time]string, error) {
-	var migrationsMap = map[time.Time]string{}
+func getMigrations(ctx context.Context, conn *pgxpool.Conn, table string) (map[int64]string, error) {
+	var migrationsMap = map[int64]string{}
 
 	rows, err := conn.Query(ctx, fmt.Sprintf("SELECT migration_date, name FROM migrations.%s", table))
 	if err != pgx.ErrNoRows && err != nil {
@@ -195,7 +217,7 @@ func getMigrations(ctx context.Context, conn *pgxpool.Conn, table string) (map[t
 		if err := rows.Scan(&date, &name); err != nil {
 			return nil, err
 		}
-		migrationsMap[date] = name
+		migrationsMap[date.Unix()] = name
 	}
 	return migrationsMap, nil
 }
