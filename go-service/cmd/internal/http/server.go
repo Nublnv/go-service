@@ -4,15 +4,16 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Nublnv/go-service/cmd/internal/db"
 	"github.com/Nublnv/go-service/cmd/internal/middleware"
 	router "github.com/Nublnv/go-service/cmd/internal/router"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func GetHttpServer(host string, port string, pool *pgxpool.Pool) *http.Server {
+func GetHttpServer(host string, port string, pool *pgxpool.Pool, chPool *db.Pool) *http.Server {
 	svc := &http.Server{
 		Addr:    fmt.Sprintf("%s:%s", host, port),
-		Handler: middleware.DbMiddleware(pool)(router.GetRouter()),
+		Handler: middleware.DbMiddleware(pool)(middleware.ChMiddleware(chPool)(router.GetRouter())),
 	}
 
 	return svc

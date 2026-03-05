@@ -87,6 +87,7 @@ func DoChickMigrations(ctx context.Context, pool *db.Pool, pgPool *pgxpool.Pool)
 	if err != nil {
 		return err
 	}
+	defer conn.Realese()
 	path := os.Getenv("MIGRATIONS_PATH")
 	files, err := os.ReadDir(fmt.Sprintf("%s/clickhouse", path))
 	if err != nil {

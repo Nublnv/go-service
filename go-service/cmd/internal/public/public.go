@@ -52,7 +52,7 @@ func register(w http.ResponseWriter, r *http.Request) error {
 		Password: r.FormValue("password"),
 	}
 
-	var db pgx.Tx = r.Context().Value("db").(pgx.Tx)
+	var db pgx.Tx = r.Context().Value("pg").(pgx.Tx)
 
 	var existedLogin string = ""
 
@@ -95,7 +95,7 @@ func login(w http.ResponseWriter, r *http.Request) error {
 		Password: r.FormValue("password"),
 	}
 
-	var db pgx.Tx = r.Context().Value("db").(pgx.Tx)
+	var db pgx.Tx = r.Context().Value("pg").(pgx.Tx)
 
 	userData := &UserData{}
 
