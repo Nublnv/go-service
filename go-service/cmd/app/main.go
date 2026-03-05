@@ -74,8 +74,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	migrations.DoPgMigrates(baseContext, *conn)
+	err = migrations.DoPgMigrates(baseContext, *conn)
 	conn.Conn().Close(baseContext)
+	if err != nil {
+		panic(err)
+	}
 
 	svc := http.GetHttpServer(host, port, pool)
 	go http.ServeServer(svc, fmt.Sprintf("%s/server.crt", tlsPath), fmt.Sprintf("%s/server.key", tlsPath))()
