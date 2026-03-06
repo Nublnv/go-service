@@ -52,7 +52,6 @@ func DoPgMigrates(ctx context.Context, pool *pgxpool.Pool) error {
 		if err != nil {
 			return err
 		}
-		date.Unix()
 		value, ok := migrationsMapping[date.Unix()]
 		if ok && value == name {
 			continue
@@ -179,16 +178,17 @@ func parseFileName(filename string) (*time.Time, string, error) {
 
 	result := re.FindStringSubmatch(filename)
 	if len(result) == 3 {
-		name := strings.Replace(result[2], "_", " ", -1)
+		name := strings.ReplaceAll(result[2], "_", " ")
 		if result[1] != "00000000000000" {
 			date, err := time.Parse("20060102150405", result[1])
 			if err != nil {
 				return nil, "", errors.New("Wrong time format")
 			}
+			date = date.In(time.UTC)
 			return &date, name, nil
 		} else {
 			date := new(time.Time)
-			*date = time.Unix(0, 0)
+			*date = time.Unix(0, 0).In(time.UTC)
 			return date, name, nil
 		}
 	} else {
