@@ -10,6 +10,7 @@ import (
 
 	"github.com/Nublnv/go-service/cmd/internal/db"
 	"github.com/Nublnv/go-service/cmd/internal/http"
+	"github.com/Nublnv/go-service/cmd/internal/logging"
 	"github.com/Nublnv/go-service/cmd/internal/migrations"
 )
 
@@ -43,7 +44,7 @@ func main() {
 		}
 	}
 
-	baseContext := context.Background()
+	baseContext := context.WithValue(context.Background(), "logging", make(chan *logging.ActionData))
 
 	pool, err := db.GetPgxPool(baseContext)
 	if err != nil {
@@ -62,8 +63,16 @@ func main() {
 		panic(err)
 	}
 
-	svc := http.GetHttpServer(host, port, pool, chPool)
+	svc := http.GetHttpServer(baseContext, host, port, pool, chPool)
 	go http.ServeServer(svc, fmt.Sprintf("%s/server.crt", tlsPath), fmt.Sprintf("%s/server.key", tlsPath))()
+
+	chConn, err := chPool.Acquire(baseContext)
+	if err != nil {
+		panic(err)
+	}
+
+	pgConn, err := pool.Acquire(baseContext)
+	go logging.DoLoggingActions(baseContext, chConn.Conn(), pgConn)
 
 	fmt.Printf("Server is running on %s:%s\n", host, port)
 

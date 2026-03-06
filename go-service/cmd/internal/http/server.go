@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -10,10 +11,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func GetHttpServer(host string, port string, pool *pgxpool.Pool, chPool *db.Pool) *http.Server {
+func GetHttpServer(ctx context.Context, host string, port string, pool *pgxpool.Pool, chPool *db.Pool) *http.Server {
 	svc := &http.Server{
 		Addr:    fmt.Sprintf("%s:%s", host, port),
-		Handler: middleware.DbMiddleware(pool)(middleware.ChMiddleware(chPool)(router.GetRouter())),
+		Handler: middleware.ServerBaseContext(ctx)(middleware.DbMiddleware(pool)(middleware.ChMiddleware(chPool)(router.GetRouter()))),
 	}
 
 	return svc
