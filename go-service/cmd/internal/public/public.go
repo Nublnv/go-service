@@ -7,8 +7,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/Nublnv/go-service/cmd/internal/errorHandler"
 	"github.com/Nublnv/go-service/cmd/internal/errors"
+	"github.com/Nublnv/go-service/cmd/internal/logging"
 	"github.com/Nublnv/go-service/cmd/internal/middleware"
 	"github.com/jackc/pgx/v5"
 	"golang.org/x/crypto/bcrypt"
@@ -79,6 +81,13 @@ func register(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return errors.InternalServerError(500, "Cannot add new user", err, r)
 	}
+
+	ctx, cancel = context.WithTimeout(context.WithoutCancel(r.Context()), 1*time.Minute)
+	defer cancel()
+
+	ch := r.Context().Value("click").(clickhouse.Conn)
+
+	go logging.LogUserAction(ctx, ch, db, "registration", userid)
 
 	return nil
 }
