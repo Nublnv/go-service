@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/Nublnv/go-service/cmd/internal/errorHandler"
 	"github.com/Nublnv/go-service/cmd/internal/errors"
 	"github.com/Nublnv/go-service/cmd/internal/logging"
@@ -85,9 +84,7 @@ func register(w http.ResponseWriter, r *http.Request) error {
 	ctx, cancel = context.WithTimeout(context.WithoutCancel(r.Context()), 1*time.Minute)
 	defer cancel()
 
-	ch := r.Context().Value("click").(clickhouse.Conn)
-
-	go logging.LogUserAction(ctx, ch, db, "registration", userid)
+	go logging.LogUserAction(ctx, "registration", userid)
 
 	return nil
 }
@@ -141,9 +138,7 @@ func login(w http.ResponseWriter, r *http.Request) error {
 	ctx, cancel = context.WithTimeout(context.WithoutCancel(r.Context()), 1*time.Minute)
 	defer cancel()
 
-	ch := r.Context().Value("click").(clickhouse.Conn)
-
-	go logging.LogUserAction(ctx, ch, db, "login", userData.userid)
+	go logging.LogUserAction(ctx, "login", userData.userid)
 
 	return nil
 }
