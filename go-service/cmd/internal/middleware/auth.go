@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 	"os"
 	"strings"
@@ -14,9 +15,8 @@ import (
 var secretKey string = os.Getenv("JWT_SECRET_KEY")
 
 type claims struct {
-	login string
-	exp   int64 `time.Time.Unix()`
-	iat   int64 `time.Time.Unix()`
+	Login  string `json:"login"`
+	Userid int    `json:"user_id"`
 	jwt.RegisteredClaims
 }
 
@@ -30,11 +30,13 @@ func AuthMiddleware(next http.Handler) http.Handler {
 				return errors.BadRequest(400, "Wrong auth method", nil, r)
 			}
 			tokenString := strings.TrimPrefix(authHeader, prefix)
-			err := checkToken(tokenString, r)
+			claim, err := checkToken(tokenString, r)
 			if err != nil {
 				return err
 			}
-			next.ServeHTTP(w, r)
+			ctx := context.WithValue(r.Context(), "login", claim.Login)
+			ctx = context.WithValue(ctx, "userid", claim.Userid)
+			next.ServeHTTP(w, r.WithContext(ctx))
 			return nil
 		} else {
 			return errors.Unauthorized(1001, "Unauthorized", nil, r)
@@ -42,7 +44,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	}))
 }
 
-func checkToken(tokenString string, r *http.Request) *errors.HTTPError {
+func checkToken(tokenString string, r *http.Request) (*claims, error) {
 	claim := &claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claim, func(t *jwt.Token) (any, error) {
 		if t.Method != jwt.SigningMethodHS256 {
@@ -51,20 +53,28 @@ func checkToken(tokenString string, r *http.Request) *errors.HTTPError {
 		return []byte(secretKey), nil
 	})
 	if err != nil {
-		return errors.InternalServerError(500, "Token parse error", err, r)
+		return nil, errors.InternalServerError(500, "Token parse error", err, r)
 	}
 	if !token.Valid {
-		return errors.Unauthorized(401, "Token not valid", nil, r)
+		return nil, errors.Unauthorized(401, "Token not valid", nil, r)
 	}
-	return nil
+	c, ok := token.Claims.(*claims)
+	if !ok || !token.Valid {
+		return nil, errors.Unauthorized(401, "invalid token", nil, r)
+	}
+	return c, nil
 }
 
-func GetToken(login string) (string, error) {
+func GetToken(login string, userid int, ip string) (string, error) {
 
 	claims := claims{
-		login: login,
-		iat:   time.Now().Unix(),
-		exp:   time.Now().Add(4 * time.Hour).Unix(),
+		Login:  login,
+		Userid: userid,
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    ip,
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(4 * time.Hour)),
+		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

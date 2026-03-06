@@ -2,6 +2,7 @@ package public
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -35,6 +36,7 @@ type RegisterRequest struct {
 
 type UserData struct {
 	login    string
+	userid   int
 	passhash []byte
 }
 
@@ -72,9 +74,9 @@ func register(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return errors.InternalServerError(500, "Cannot hash password", err, r)
 	}
-
-	insert, err := db.Exec(ctx, "INSERT INTO auth.users (login, passhash) VALUES ( $1, $2 )", registerReq.Username, passHash)
-	if err != nil || insert.RowsAffected() == 0 {
+	var userid int
+	err = db.QueryRow(ctx, "INSERT INTO auth.users (login, passhash) VALUES ( $1, $2 ) RETURNING user_id", registerReq.Username, passHash).Scan(userid)
+	if err != nil {
 		return errors.InternalServerError(500, "Cannot add new user", err, r)
 	}
 
@@ -102,8 +104,8 @@ func login(w http.ResponseWriter, r *http.Request) error {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
-	res := db.QueryRow(ctx, "SELECT login, passhash FROM auth.users WHERE login = $1", loginReq.Username)
-	err := res.Scan(&userData.login, &userData.passhash)
+	res := db.QueryRow(ctx, "SELECT login, passhash, user_id FROM auth.users WHERE login = $1", loginReq.Username)
+	err := res.Scan(&userData.login, &userData.passhash, &userData.userid)
 	if err != nil && err != pgx.ErrNoRows {
 		return errors.BadRequest(500, "Something went wrong", err, r)
 	} else if err == pgx.ErrNoRows {
@@ -115,12 +117,24 @@ func login(w http.ResponseWriter, r *http.Request) error {
 		return errors.Forbidden(403, "Wrong password", err, r)
 	}
 
-	token, err := middleware.GetToken(userData.login)
+	token, err := middleware.GetToken(userData.login, userData.userid, r.RemoteAddr)
 	if err != nil {
 		return errors.InternalServerError(500, "Internal server error", err, r)
 	}
 
 	w.Header().Add("Authorization", fmt.Sprintf("Bearer %s", token))
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	json.NewEncoder(w).Encode(map[string]string{
+		"token": token,
+	})
+
+	ctx, cancel = context.WithTimeout(context.WithoutCancel(r.Context()), 1*time.Minute)
+	defer cancel()
+
+	ch := r.Context().Value("click").(clickhouse.Conn)
+
+	go logging.LogUserAction(ctx, ch, db, "login", userData.userid)
 
 	return nil
 }
