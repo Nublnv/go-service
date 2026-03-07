@@ -14,13 +14,17 @@ func main() {
 	if port == "" {
 		port = "443"
 	}
+	host := os.Getenv("REST_HOST")
+	if host == "" {
+		host = "localhost"
+	}
 
 	timeout := 5 * time.Second
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("https://localhost:%s/healthcheck", port), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("https://%s:%s/healthcheck", host, port), nil)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
