@@ -71,6 +71,11 @@ services:
       - go-service
     volumes:
       - tls:/src/certs
+    healthcheck:
+      timeout: 5s
+      interval: 2m
+      retries: 5
+      test: ["CMD", "/healthcheck"]
 
 volumes:
   postgres:

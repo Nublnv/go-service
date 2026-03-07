@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/Nublnv/go-service/cmd/internal/errorHandler"
 	"github.com/Nublnv/go-service/cmd/internal/errors"
 	"github.com/Nublnv/go-service/cmd/internal/logging"
@@ -19,10 +20,7 @@ import (
 var handler http.ServeMux
 
 func init() {
-	handler.Handle("/health", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
-	}))
+	handler.Handle("/healthcheck", errorHandler.Wrap(healthcheck))
 	handler.Handle("/register", errorHandler.Wrap(register))
 	handler.Handle("/login", errorHandler.Wrap(login))
 }
@@ -104,11 +102,6 @@ func login(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	// &RegisterRequest{
-	// 	Username: r.FormValue("login"),
-	// 	Password: r.FormValue("password"),
-	// }
-
 	var db pgx.Tx = r.Context().Value("pg").(pgx.Tx)
 
 	userData := &UserData{}
@@ -145,6 +138,30 @@ func login(w http.ResponseWriter, r *http.Request) error {
 	defer cancel()
 
 	go logging.LogUserAction(ctx, "login", userData.userid)
+
+	return nil
+}
+
+func healthcheck(w http.ResponseWriter, r *http.Request) error {
+	if r.Method != http.MethodGet {
+		errors.MethodNotAllowed(1000, "Method not allowed", nil, r)
+	}
+	pg := r.Context().Value("pg").(pgx.Tx)
+
+	err := pg.Conn().Ping(r.Context())
+	if err != nil {
+		return errors.InternalServerError(500, "Postgres unhealthy", err, r)
+	}
+
+	ch := r.Context().Value("click").(clickhouse.Conn)
+
+	err = ch.Ping(r.Context())
+	if err != nil {
+		return errors.InternalServerError(500, "Clickhouse unhealthy", err, r)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
 
 	return nil
 }

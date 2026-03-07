@@ -12,9 +12,20 @@ import (
 )
 
 func GetHttpServer(ctx context.Context, host string, port string, pool *pgxpool.Pool, chPool *db.Pool) *http.Server {
+
+	handler := middleware.AccessLog(
+		middleware.ServerBaseContext(ctx)(
+			middleware.DbMiddleware(pool)(
+				middleware.ChMiddleware(chPool)(
+					router.GetRouter(),
+				),
+			),
+		),
+	)
+
 	svc := &http.Server{
 		Addr:    fmt.Sprintf("%s:%s", host, port),
-		Handler: middleware.ServerBaseContext(ctx)(middleware.DbMiddleware(pool)(middleware.ChMiddleware(chPool)(router.GetRouter()))),
+		Handler: handler,
 	}
 
 	return svc
