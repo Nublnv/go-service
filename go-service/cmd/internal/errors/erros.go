@@ -9,9 +9,15 @@ type ErrorResponse struct {
 	Error ErrorBody `json:"message"`
 }
 
+type ValidationErrorDetail struct {
+	Fields []string `json:"loc"`
+	Msg    string   `json:"msg"`
+}
+
 type ErrorBody struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
+	Code    int                     `json:"code"`
+	Message string                  `json:"message"`
+	Detail  []ValidationErrorDetail `json:"detail"`
 }
 
 type HTTPError struct {
@@ -19,6 +25,7 @@ type HTTPError struct {
 	Code    int
 	Message string
 	ip      string
+	Detail  []ValidationErrorDetail
 
 	e error
 }
@@ -91,5 +98,16 @@ func MethodNotAllowed(code int, message string, err error, r *http.Request) *HTT
 		Message: message,
 		e:       err,
 		ip:      r.RemoteAddr,
+	}
+}
+
+func ValidationError(code int, message string, err error, r *http.Request, detail ...ValidationErrorDetail) *HTTPError {
+	return &HTTPError{
+		Status:  http.StatusUnprocessableEntity,
+		Code:    code,
+		Message: message,
+		e:       err,
+		ip:      r.RemoteAddr,
+		Detail:  detail,
 	}
 }

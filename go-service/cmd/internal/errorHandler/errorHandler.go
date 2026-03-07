@@ -22,16 +22,16 @@ func Wrap(h ApiErrorResponse) http.HandlerFunc {
 					Error: httpErrors.ErrorBody{
 						Code:    httpErr.Code,
 						Message: httpErr.Message,
+						Detail:  httpErr.Detail,
 					},
 				})
 				r.Context().Err()
 				log.Print(httpErr.Error())
 				return
-			} else {
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte("Internal Server Error"))
-				return
 			}
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("Internal Server Error"))
+			return
 		}
 	}
 }

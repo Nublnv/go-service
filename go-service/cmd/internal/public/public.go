@@ -11,6 +11,7 @@ import (
 	"github.com/Nublnv/go-service/cmd/internal/errors"
 	"github.com/Nublnv/go-service/cmd/internal/logging"
 	"github.com/Nublnv/go-service/cmd/internal/middleware"
+	"github.com/Nublnv/go-service/cmd/internal/validation"
 	"github.com/jackc/pgx/v5"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -31,8 +32,8 @@ func GetPublicHandler() http.Handler {
 }
 
 type RegisterRequest struct {
-	Username string `json:"login"`
-	Password string `json:"password"`
+	Username string `form:"login" validate:"required"`
+	Password string `form:"password" validate:"required"`
 }
 
 type UserData struct {
@@ -50,9 +51,9 @@ func register(w http.ResponseWriter, r *http.Request) error {
 		return errors.BadRequest(1002, "Invalid form data", err, r)
 	}
 
-	registerReq := &RegisterRequest{
-		Username: r.FormValue("login"),
-		Password: r.FormValue("password"),
+	registerReq, err := validation.DecodeAndValidate[RegisterRequest](r)
+	if err != nil {
+		return nil
 	}
 
 	var db pgx.Tx = r.Context().Value("pg").(pgx.Tx)
@@ -63,7 +64,7 @@ func register(w http.ResponseWriter, r *http.Request) error {
 	defer cancel()
 
 	res := db.QueryRow(ctx, "SELECT login FROM auth.users WHERE login = $1", registerReq.Username)
-	err := res.Scan(&existedLogin)
+	err = res.Scan(&existedLogin)
 	if err != nil && err != pgx.ErrNoRows {
 		return errors.BadRequest(500, "Something went wrong", err, r)
 	}
@@ -98,10 +99,15 @@ func login(w http.ResponseWriter, r *http.Request) error {
 		return errors.BadRequest(1002, "Invalid form data", err, r)
 	}
 
-	loginReq := &RegisterRequest{
-		Username: r.FormValue("login"),
-		Password: r.FormValue("password"),
+	loginReq, err := validation.DecodeAndValidate[RegisterRequest](r)
+	if err != nil {
+		return err
 	}
+
+	// &RegisterRequest{
+	// 	Username: r.FormValue("login"),
+	// 	Password: r.FormValue("password"),
+	// }
 
 	var db pgx.Tx = r.Context().Value("pg").(pgx.Tx)
 
@@ -111,7 +117,7 @@ func login(w http.ResponseWriter, r *http.Request) error {
 	defer cancel()
 
 	res := db.QueryRow(ctx, "SELECT login, passhash, user_id FROM auth.users WHERE login = $1", loginReq.Username)
-	err := res.Scan(&userData.login, &userData.passhash, &userData.userid)
+	err = res.Scan(&userData.login, &userData.passhash, &userData.userid)
 	if err != nil && err != pgx.ErrNoRows {
 		return errors.BadRequest(500, "Something went wrong", err, r)
 	} else if err == pgx.ErrNoRows {
