@@ -1,8 +1,5 @@
 # Project Plan: Go HTTP/gRPC + Postgres + ClickHouse + Mongo (+ Python gRPC)
 
-> Все пункты имеют уникальный номер, чтобы можно было ссылаться на них в commit message  
-> Пример: `feat: implement order creation (#8.1)`  
-
 ---
 
 # 1. Repository & Project Structure
@@ -43,7 +40,7 @@
 
 - [x] **2.8** Добавить docker networks
 
-- [ ] **2.9** Добавить healthchecks
+- [x] **2.9** Добавить healthchecks
 
 - [ ] **2.10** Добавить `.env.example`
 
@@ -217,7 +214,7 @@
 
 - [ ] **10.5** `GET /analytics/orders`
 
-- [ ] **10.6** `GET /healthz`
+- [x] **10.6** `GET /healthcheck`
 
 - [x] **10.7** Валидация входных данных
 

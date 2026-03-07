@@ -3,7 +3,6 @@ package errors
 import (
 	"fmt"
 	"net/http"
-	"time"
 )
 
 type ErrorResponse struct {
@@ -33,9 +32,9 @@ type HTTPError struct {
 
 func (e *HTTPError) Error() string {
 	if e.e != nil {
-		return fmt.Sprintf("%s - %s: HTTP %d: %s - %v", time.Now().Format("2006-01-02 15:04:05 MST -0700"), e.ip, e.Status, e.Message, e.e)
+		return fmt.Sprintf("%s: HTTP %d: %s - %v\n", e.ip, e.Status, e.Message, e.e)
 	}
-	return fmt.Sprintf("%s HTTP %d: %s", e.ip, e.Status, e.Message)
+	return fmt.Sprintf("%s: HTTP %d: %s\n", e.ip, e.Status, e.Message)
 }
 
 func (e *HTTPError) Unwrap() error {
