@@ -10,7 +10,7 @@ COPY migrations ./migrations
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
 go build -trimpath -ldflags="-s -w" -o /app ./cmd/app
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
-go build -trimpath -ldflags="-s -w" -o /healthcheck ./healthcheck
+go build -trimpath -ldflags="-s -w" -o /healthcheck ./cmd/healthcheck
 
 FROM debian:stable-slim AS runtime
 
