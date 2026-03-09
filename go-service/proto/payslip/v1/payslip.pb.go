@@ -119,8 +119,9 @@ func (x *GeneratePayslipResponse) GetId() string {
 
 type SendPaylipRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Filename      string                 `protobuf:"bytes,1,opt,name=filename,proto3" json:"filename,omitempty"`
-	Content       []byte                 `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
+	Userid        int32                  `protobuf:"varint,1,opt,name=userid,proto3" json:"userid,omitempty"`
+	Filename      string                 `protobuf:"bytes,2,opt,name=filename,proto3" json:"filename,omitempty"`
+	Content       []byte                 `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -153,6 +154,13 @@ func (x *SendPaylipRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use SendPaylipRequest.ProtoReflect.Descriptor instead.
 func (*SendPaylipRequest) Descriptor() ([]byte, []int) {
 	return file_payslip_v1_payslip_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *SendPaylipRequest) GetUserid() int32 {
+	if x != nil {
+		return x.Userid
+	}
+	return 0
 }
 
 func (x *SendPaylipRequest) GetFilename() string {
@@ -429,10 +437,11 @@ const file_payslip_v1_payslip_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x14\n" +
 	"\x05count\x18\x02 \x01(\x05R\x05count\")\n" +
 	"\x17GeneratePayslipResponse\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"I\n" +
-	"\x11SendPaylipRequest\x12\x1a\n" +
-	"\bfilename\x18\x01 \x01(\tR\bfilename\x12\x18\n" +
-	"\acontent\x18\x02 \x01(\fR\acontent\"%\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"a\n" +
+	"\x11SendPaylipRequest\x12\x16\n" +
+	"\x06userid\x18\x01 \x01(\x05R\x06userid\x12\x1a\n" +
+	"\bfilename\x18\x02 \x01(\tR\bfilename\x12\x18\n" +
+	"\acontent\x18\x03 \x01(\fR\acontent\"%\n" +
 	"\x13SendPayslipResponse\x12\x0e\n" +
 	"\x02ok\x18\x01 \x01(\bR\x02ok\"#\n" +
 	"\x11GetPayslipRequest\x12\x0e\n" +
