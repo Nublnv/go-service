@@ -24,6 +24,7 @@ COPY --from=build --chown=nonroot:1000 /app /app
 COPY --from=build --chown=nonroot:1000 /healthcheck /healthcheck
 
 EXPOSE 443
+EXPOSE 55443
 
 USER nonroot:nonroot
 ENTRYPOINT [ "/app" ]
