@@ -141,7 +141,7 @@ func AuthMiddlewareRpc(ctx context.Context, req any, info *grpc.UnaryServerInfo,
 		authHeader := authHeaderArr[0]
 		prefix := "Bearer "
 		if !strings.HasPrefix(authHeader, prefix) {
-			return nil, status.Error(codes.Unauthenticated, "Wrong ")
+			return nil, status.Error(codes.Unauthenticated, "Wrong authorization method")
 		}
 		tokenString := strings.TrimPrefix(authHeader, prefix)
 		claim, err := checkToken(tokenString)

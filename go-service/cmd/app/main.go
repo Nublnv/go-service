@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
 	"os/signal"
 	"syscall"
@@ -12,6 +13,7 @@ import (
 	"github.com/Nublnv/go-service/cmd/internal/http"
 	"github.com/Nublnv/go-service/cmd/internal/logging"
 	"github.com/Nublnv/go-service/cmd/internal/migrations"
+	"github.com/Nublnv/go-service/cmd/internal/rpc"
 )
 
 func main() {
@@ -23,6 +25,10 @@ func main() {
 	port := os.Getenv("REST_PORT")
 	if port == "" {
 		port = "443"
+	}
+	rpcPort := os.Getenv("RPC_PORT")
+	if rpcPort == "" {
+		rpcPort = "55443"
 	}
 
 	tlsPath := os.Getenv("TLS_PATH")
@@ -74,7 +80,20 @@ func main() {
 	pgConn, err := pool.Acquire(baseContext)
 	go logging.DoLoggingActions(baseContext, chConn.Conn(), pgConn)
 
-	fmt.Printf("Server is running on %s:%s\n", host, port)
+	fmt.Printf("Http server is running on %s:%s\n", host, port)
+
+	rpcSvc, err := rpc.GetRpcServer(pool, chPool, fmt.Sprintf("%s/server.crt", tlsPath), fmt.Sprintf("%s/server.key", tlsPath))
+	if err != nil {
+		panic(err)
+	}
+
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%s", rpcPort))
+	if err != nil {
+		panic(err)
+	}
+
+	go rpc.ServeServer(rpcSvc, listener)()
+	fmt.Printf("Rpc server is running on %s:%s\n", host, rpcPort)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
@@ -84,6 +103,8 @@ func main() {
 	ctx, cancel := context.WithTimeout(baseContext, 5*time.Second)
 	defer pool.Close()
 	defer cancel()
+
+	defer rpcSvc.Stop()
 
 	if err := svc.Shutdown(ctx); err != nil {
 		panic(fmt.Sprintf("Failed to shutdown server: %v", err))
