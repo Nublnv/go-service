@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package payslip.v1;
+
+option go_package = "github.com/Nublnv/go-service/proto/payslip/v1;payslipv1";
+
+// Service for work with payslips documents
+service DocumentService {
+// Method for generate payslip in Python service and save it in mongo. Returns payslipid
+  rpc GeneratePayslip(GeneratePayslipRequest) returns (GeneratePayslipResponse);
+// Method uses for send email with payslip
+  rpc SendPayslip(SendPaylipRequest) returns (SendPayslipResponse);
+// Method returns payslip document by id
+  rpc GetPayslip(GetPayslipRequest) returns (GetPayslipResponse);
+}
+
+message GeneratePayslipRequest {
+  int32 userid = 1;
+  message OrderData {
+    int64 orderid = 1;
+    message Item {
+        int64 id = 1;
+        int32 count = 2;
+    }
+    repeated Item items = 2;
+  }
+  OrderData order = 2;
+}
+
+message GeneratePayslipResponse {
+  string id = 1;
+}
+
+message SendPaylipRequest {
+  string filename = 1;
+  bytes content = 2;
+}
+
+message SendPayslipResponse {
+  bool ok = 1;
+}
+
+message GetPayslipRequest {
+  string id = 1;
+}
+message GetPayslipResponse {
+  string filename = 1;
+  bytes content = 2;
+}
